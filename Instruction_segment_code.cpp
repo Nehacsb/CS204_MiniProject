@@ -44,6 +44,8 @@ int binaryToDecimal(string binary) {
         if (binary[i] == '1') {
             decimal += pow(2, power);
         }
+        if(binary[i]!='1'&&binary[i]!='0')
+        return -2050;
         power++;
     }
     return decimal;
@@ -56,7 +58,7 @@ int hexCharToInt(char c) {
     } else if (c >= 'a' && c <= 'f') {
         return 10 + (c - 'a');
     } else {
-        return -2050; // Invalid character
+        return -1; // Invalid character
     }
 }
 int hexToDecimal(string hex) {
@@ -66,8 +68,9 @@ int hexToDecimal(string hex) {
     // Start from the rightmost (least significant) digit
     for (int i = hex.size() - 1; i >= 2; --i) {
         int digitValue = hexCharToInt(hex[i]);
-        if (digitValue == -2050) {
-            return INT_MIN;             //invalid character
+        if (digitValue == -1) {
+         //   cout <<i<<"  Invalid hexadecimal number." << endl;
+            return -2050;
         }
         decimal += digitValue * pow(16, power);
         power++;
@@ -75,7 +78,29 @@ int hexToDecimal(string hex) {
     return decimal;
 }
 
+// Function to calculate the size of a binary string (number of bits)
+int binarySize(string binaryStr)
+{
+    // Find the position of the first non-zero bit in the binary string
+    size_t firstNonZero = binaryStr.find_first_not_of('0');
+
+    // If the binary string is all zeros, return 0
+    if (firstNonZero == string::npos)
+    {
+        return 0;
+    }
+
+    // Calculate and return the size of the binary string (number of bits)
+    return binaryStr.length() - firstNonZero;
+}
 // R-format machine code generation function
+int checkd(string a){
+    int n =  a.size();
+for(int i=0;i<n;i++){
+    if((a[i]>'9'||a[i]<'0')&&a[i]!='-')return 0;
+}
+return 1;
+}
 string R_form(string a, string b, string c, string d)
 {
     // Concatenate fields based on specified order
@@ -93,7 +118,7 @@ string R_form(string a, string b, string c, string d)
 // S-format machine code generation function
 string S_form(string a, string b, string c)
 {
-    // Initialize offset  
+    // Initialize offset and register strings
     string d;
     d.clear();
     int i = 0;
@@ -114,82 +139,30 @@ string S_form(string a, string b, string c)
         k = 0;
         return hlep;
     }
-
-    //if offset is not of the form hexadecimal and binary as well if not start from 0-9 digits
-    if((d[0]<48 || d[0]>57) && d[0]!='-'){
-        return "INVALID OFFSET";
-    }
-    //Initialize register strings
-    string bis;         //binary string with 12 bits (initial bits are zero then bis_h bits are there)
-    string bis_h;       //binary string converted from hexadecimal number
-    int deci;               //deci for checking range of immediate field
+    string bis;
+    int deci;
     // Convert offset to binary if it is in hexadecimal format
-    if((d[0] == '0' && d[1] == 'x') ||(d[0] == '-' && d[1] == '0' && d[2]=='x' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT";       //if there is a minus sign at start of 0x
-        }
-        deci = hexToDecimal(d);
-        if(deci<=2047 && deci>=-2048){      //if a valid offset then formation of immediate field of 12 bits
-            bis_h = hexToBinary(d);
-            for (int r = 0; r < 12 - bis_h.size();r++){
-            bis += '0';
-            }
-            bis += bis_h;
-        }
+    if (d[0] == '0' && d[1] == 'x')
+    {
+        bis = hexToBinary(d);
+         deci = hexToDecimal(d);
     }
-    //Convert offset to binary if it is in binary format
-     else if((d[0] == '0' && d[1] == 'b') ||(d[0] == '-' && d[1] == '0' && d[2]=='b' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT";      //if there is a minus sign at start of 0b
-        }
-        int t=2;                        //t=2 because string d has d[0]=0 and d[1]=b
-        for (t = 2; t < d.size();t++){      //if initial bits of d are 0 ignore them
-            if(d[t]=='0'){
-                continue;
-            }
-            else
-                break;
-        }
-        
-        int size_d = d.size() - t;      //actual size of binary string (from 0b0001111 to 1111)
-        if(size_d>11){                  //if binary form<=11111111111 then within range else out of range(like 100000000000)
-            return "OUT OF RANGE";
-        }
-        for (int r = 0; r < 12 - size_d; r++)       //immediate field of 12 bits with initial bits 0 if required
-        {
-            bis += '0';
-        }
-        for (int w = t; w < d.size();w++){
-            if(d[w]=='0' ||d[w]=='1' ){
-                bis += d[w];
-            }
-            else{
-                return "INVALID OFFSET";        //if other than 0 and 1 
-            }
-        }
-        deci = binaryToDecimal(d);         
+    else if(d[0] == '0' && d[1] == 'b'){
+        bis = d;
+        deci = binaryToDecimal(d);
     }
-    //Convert offset to binary if it is in decimal format
     else
     {
         // Convert offset to binary and ensure it fits within 12 bits
-        
-            int n1 = stoi(d);
-        deci = n1;        
+        int n1 = stoi(d);
+        if(!checkd(d))
+        return "OUT OF RANGE";
+        deci = n1;
         bitset<12> bi(n1);
         bis = bi.to_string();
-        if(d[0]=='-' ||(d[0]>=48 && d[0]<=57)){
-            for (int w =  1; w < d.size();w++){
-            if(d[w]>=48 && d[w]<=57)
-                continue;
-            else
-                return "INVALID OFFSET";        //if other than a decimal number
-            }
-        }
-        else
-            return "INVALID OFFSET";
     }
-    // Check if immediate field is within range
+
+    // Check if binary offset size is less than or equal to 12 bits
     if (deci<=2047 && deci>=-2048)
     {
         // Extract relevant bits from the binary offset
@@ -214,13 +187,8 @@ string S_form(string a, string b, string c)
         hlep = "0x" + hlep;
         return hlep;
     }
-    else if(deci==INT_MIN){         //if wrong character in hexadecimal format
-        return "INVALID OFFSET";
-    }
-    else{
+    else
         return "OUT OF RANGE";
-    }
-        
 }
 // Load Immediate (L_I) format machine code generation function
 string L_I_form(string a, string b, string c)
@@ -250,80 +218,32 @@ string L_I_form(string a, string b, string c)
         k = 0;
         return hlep;
     }
-    //if offset is not of the form hexadecimal and binary as well if not start from 0-9 digits
-    if((d[0]<48 || d[0]>57) && d[0]!='-'){
-        return "INVALID OFFSET";
-    }
-    string bis;         //binary string with 12 bits (initial bits are zero then bis_h bits are there)
-    string bis_h;       //binary string converted from hexadecimal number
-    int deci;           //deci for range of immediate field
+
+    string bis;
+    int deci;
+    //cout << d << endl;
     // Convert offset to binary if it is in hexadecimal format
-    if((d[0] == '0' && d[1] == 'x') ||(d[0] == '-' && d[1] == '0' && d[2]=='x' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT";       //if there is a minus sign at start of 0x
-        } 
+    if (d[0] == '0' && d[1] == 'x')
+    {
+        bis = hexToBinary(d);
         deci = hexToDecimal(d);
-        if(deci<=2047 && deci>=-2048){//if a valid offset then formation of immediate field of 12 bits
-            bis_h = hexToBinary(d);
-            for (int r = 0; r < 12 - bis_h.size();r++){
-            bis += '0';
-            }
-            bis += bis_h;
-        }
     }
-    //Convert offset to binary if it is in binary format
-    else if((d[0] == '0' && d[1] == 'b') ||(d[0] == '-' && d[1] == '0' && d[2]=='b' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT";           //if there is a minus sign at start of 0b
-        }
-        int t=2;//t=2 because string d has d[0]=0 and d[1]=b
-        for (t = 2; t < d.size();t++){//if initial bits of d are 0 ignore them
-            if(d[t]=='0'){
-                continue;
-            }
-            else
-                break;
-        }
-        
-        int size_d = d.size() - t;//actual size of binary string (from 0b0001111 to 1111)
-        if(size_d>11){//if binary form<=11111111111 then within range else out of range(like 100000000000)
-            return "OUT OF RANGE";
-        }
-        for (int r = 0; r < 12 - size_d; r++)//immediate field of 12 bits with initial bits 0 if required
-        {
-            bis += '0';
-        }
-        for (int w = t; w < d.size();w++){
-            if(d[w]=='0' ||d[w]=='1' ){
-                bis += d[w];
-            }
-            else{
-                return "INVALID OFFSET";//if other than 0 and 1 
-            }
-        }
+    else if(d[0] == '0' && d[1] == 'b'){
+        bis = d;
         deci = binaryToDecimal(d);
     }
-    //Convert offset to binary if it is in decimal format
     else
     {
         // Convert offset to binary and ensure it fits within 12 bits
         int n1 = stoi(d);
+         if(!checkd(d))
+        return "OUT OF RANGE";
         deci = n1;
         bitset<12> bi(n1);
         bis = bi.to_string();
-        if(d[0]=='-' ||(d[0]>=48 && d[0]<=57)){
-            for (int w =  1; w < d.size();w++){
-            if(d[w]>=48 && d[w]<=57)
-                continue;
-            else
-                return "INVALID OFFSET";//if other than a decimal number
-            }
-        }
-        else
-            return "INVALID OFFSET";
     }
 
-    // Check if immediate field is within range
+    // Check if binary offset size is less than or equal to 12 bits
     if (deci<=2047 && deci>=-2048)
     {
         // Concatenate fields and convert binary to hexadecimal
@@ -335,9 +255,6 @@ string L_I_form(string a, string b, string c)
         hlep = hexS.str();
         hlep = "0x" + hlep;
         return hlep;
-    }
-    else if(deci==INT_MIN){
-        return "INVALID OFFSET";//if wrong character in hexadecimal format
     }
     else
         return "OUT OF RANGE";
@@ -345,80 +262,32 @@ string L_I_form(string a, string b, string c)
 // I-format machine code generation function
 string I_form(string a, string b, string c, string d)
 {
-    //if offset is not of the form hexadecimal and binary as well if not start from 0-9 digits
-    if((d[0]<48 || d[0]>57) && d[0]!='-'){
-        return "INVALID OFFSET";
-    }
-    string bis;         //binary string with 12 bits (initial bits are zero then bis_h bits are there)
-    string bis_h;       //binary string converted from hexadecimal number
-    int deci;            //deci for checking range of immediate field
-    // Convert offset to binary if it is in hexadecimal format
-    if((d[0] == '0' && d[1] == 'x') ||(d[0] == '-' && d[1] == '0' && d[2]=='x' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT";       //if there is a minus sign at start of 0x
-        }
+    // Convert immediate value to binary
+    string bis;
+    int deci;
+   // cout << d << endl;
+    if (d[0] == '0' && d[1] == 'x')
+    {
+        // If immediate value is in hexadecimal, convert to binary
+        bis = hexToBinary(d);
         deci = hexToDecimal(d);
-        if(deci<=2047 && deci>=-2048){//if a valid offset then formation of immediate field of 12 bits
-            bis_h = hexToBinary(d);
-            for (int r = 0; r < 12 - bis_h.size();r++){
-            bis += '0';
-            }
-            bis += bis_h;
-        }
     }
-    //Convert offset to binary if it is in binary format
-    else if((d[0] == '0' && d[1] == 'b') ||(d[0] == '-' && d[1] == '0' && d[2]=='b' )){
-        if(d[0]=='-'){
-            return "WRONG INPUT"; //if there is a minus sign at start of 0b
-        }
-        int t=2;//t=2 because string d has d[0]=0 and d[1]=b
-        for (t = 2; t < d.size();t++){//if initial bits of d are 0 ignore them
-            if(d[t]=='0'){
-                continue;
-            }
-            else
-                break;
-        }
-        
-        int size_d = d.size() - t;//actual size of binary string (from 0b0001111 to 1111)
-        if(size_d>11){//if binary form<=11111111111 then within range else out of range(like 100000000000)
-            return "OUT OF RANGE";
-        }
-        for (int r = 0; r < 12 - size_d; r++)//immediate field of 12 bits with initial bits 0 if required
-        {
-            bis += '0';
-        }
-        for (int w = t; w < d.size();w++){
-            if(d[w]=='0' ||d[w]=='1' ){
-                bis += d[w];
-            }
-            else{
-                return "INVALID OFFSET";//if other than 0 and 1 
-            }
-        }
+    else if(d[0] == '0' && d[1] == 'b'){
+        bis = d;
         deci = binaryToDecimal(d);
     }
-    //Convert offset to binary if it is in decimal format
     else
-    {   
-        // Convert offset to binary and ensure it fits within 12 bits
+    {
+        // If immediate value is in decimal, convert to binary and ensure it fits within 12 bits
         int n1 = stoi(d);
+         if(!checkd(d))
+        return "OUT OF RANGE";
         deci = n1;
         bitset<12> bi(n1);
         bis = bi.to_string();
-
-        if(d[0]=='-' ||(d[0]>=48 && d[0]<=57)){
-            for (int w =  1; w < d.size();w++){
-            if(d[w]>=48 && d[w]<=57)
-                continue;
-            else
-                return "INVALID OFFSET";//if other than a decimal number
-            }
-        }
-        else
-            return "INVALID OFFSET";
     }
-    // Check if immediate field is within range
+
+    // Check if binary immediate size is less than or equal to 12 bits
     if (deci<=2047 && deci>=-2048)
     {
         // Concatenate fields and convert binary to hexadecimal
@@ -430,9 +299,6 @@ string I_form(string a, string b, string c, string d)
         hlep = hexS.str();
         hlep = "0x" + hlep;
         return hlep;
-    }
-    else if(deci==INT_MIN){
-        return "INVALID OFFSET";//if wrong character in hexadecimal format
     }
     else
         return "OUT OF RANGE";
@@ -441,95 +307,42 @@ string I_form(string a, string b, string c, string d)
 // U-format machine code generation function
 string U_form(string a, string b, string c)
 {
-    //if offset is not of the form hexadecimal and binary as well if not start from 0-9 digits
-    if((c[0]<48 || c[0]>57) && c[0]!='-'){
-        return "INVALID OFFSET";
-    }
-    string bis;         //binary string with 12 bits (initial bits are zero then bis_h bits are there)
-    string bis_h;       //binary string converted from hexadecimal number
-    int deci;               //deci for checking range of immediate field
-    
+    // Convert immediate value to binary
+    string bis;
+    int deci;
     int n1 = stoi(c);
-    
     int n2 = n1;
-    if ((c[0] == '0' && c[1] == 'x') ||(c[0] == '-' && c[1] == '0' && c[2]=='x' ))
+    if (c[0] == '0' && c[1] == 'x')
     {
         // If immediate value is in hexadecimal, convert to binary
-        if(c[0]=='-'){
-            return "WRONG INPUT";//if there is a minus sign at start of 0x
-        }
+        bis = hexToBinary(c);
         deci = hexToDecimal(c);
-        if(deci>=0 && deci<=1048575 && n2>=0 && n2<=1048575){//if a valid offset then formation of immediate field of 20 bits
-            
-            bis_h = hexToBinary(c);
-            
-            for (int r = 0; r < 32 - bis_h.size();r++){
-            bis += '0';
-            }
-            bis += bis_h;
-        }
     }
-    //Convert offset to binary if it is in binary format
-    else if((c[0] == '0' && c[1] == 'b') ||(c[0] == '-' && c[1] == '0' && c[2]=='b' )){
-        if(c[0]=='-'){
-            return "WRONG INPUT";//if there is a minus sign at start of 0b
-        }
-        int t=2;//t=2 because string c has c[0]=0 and c[1]=b
-        for (t = 2; t < c.size();t++){//if initial bits of d are 0 ignore them
-            if(c[t]=='0'){
-                continue;
-            }
-            else
-                break;
-        }
-        
-        int size_d = c.size() - t;//actual size of binary string (from 0b0001111 to 1111)
-        if(size_d>20){          //if binary form<=1111111111111111111 then within range else out of range(like 10000000000000000000)
-            return "OUT OF RANGE";
-        }
-        for (int r = 0; r < 32 - size_d; r++)//immediate field of 12 bits with initial bits 0 if required
-        {
-            bis += '0';
-        }
-        for (int w = t; w < c.size();w++){
-            if(c[w]=='0' ||c[w]=='1' ){
-                bis += c[w];
-            }
-            else{
-                return "INVALID OFFSET";//if other than 0 and 1 
-            }
-        }
+    else if(c[0] == '0' && c[1] == 'b'){
+        bis = c;
         deci = binaryToDecimal(c);
     }
-    //Convert offset to binary if it is in decimal format
     else
-    {
+    {   
+         if(!checkd(c))
+        return "OUT OF RANGE";
         // If immediate value is in decimal, convert to binary and ensure it fits within 32 bits
         bitset<32> bi(n1);
         deci = n1;
         bis = bi.to_string();
-        if(c[0]=='-' ||(c[0]>=48 && c[0]<=57)){
-            for (int w =  1; w < c.size();w++){
-            if(c[w]>=48 && c[w]<=57){
-                continue;
-            }
-            else{
-                return "INVALID OFFSET";//if other than a decimal number
-            }
-            }
-        }
-        else{
-            return "INVALID OFFSET";
-        }
     }
-    //extracting 20 bits from 32 bit bis string
+   // cout << bis << endl;
     string bis2;
     for (int i = 12; i <32; i++)
         bis2 += bis[i];
+
+    // Extract the most significant 20 bits from the binary immediate value
    
-    // Check if immediate field is within range
+  //  cout << bis2 << endl;
+
+    // Concatenate fields and convert binary to hexadecimal
     if(deci>=0 && deci<=1048575 && n2>=0 && n2<=1048575){
-        // Concatenate fields and convert binary to hexadecimal
+    
     string hlep = bis2 + dp[b] + ap[a];
     bitset<32> bits(hlep);
     int n = bits.to_ulong();
@@ -538,9 +351,6 @@ string U_form(string a, string b, string c)
     hlep = hexS.str();
     hlep = "0x" + hlep;
     return hlep;
-    }
-    else if(deci==INT_MIN){
-        return "INVALID OFFSET";//if wrong character in hexadecimal format
     }
     else
         return "OUT OF RANGE";
@@ -736,7 +546,7 @@ string decode(string str, const string &file1)
     // Extract the instruction or label from the input string
     while (str[i] != '#' && i < str.size())
         r += str[i++];
-
+   // cout<<r<<endl;
     // Initialize fields for opcode and operands
     string a, b, c, d;
     a.clear();
@@ -748,17 +558,24 @@ string decode(string str, const string &file1)
     // Extract opcode and operands from the instruction
     while (r[i] != ' ' && r[i] != ',' && r[i] != '\0')
         a += r[i++];
-    i++;
+       // cout<<r[i]<<" ";
+       i++;
+    while(r[i]==' ')i++;
+    ///cout<<r[i]<<endl;
     while (r[i] != ' ' && r[i] != ',' && r[i] != '\0')
         b += r[i++];
-    i++;
+        i++;
+    while(r[i]==' ')i++;
     while (r[i] != ' ' && r[i] != ',' && r[i] != '\0')
         c += r[i++];
-    i++;
-    while (r[i] != ' ' && r[i] != ',' && i < r.size())
+        i++;
+    while(r[i]==' ')i++;
+    while (r[i] != ' ' && r[i] != ',' && r[i]!='\0')
         d += r[i++];
-
+    //cout<<" "<<c<<" "<<d<<endl;
     // Initialize output string
+  //  cout<<a<<" "<<b<<" "<<c<<" "<<d<<endl;
+  //cout<<d.size()<<endl;
     string out;
     out.clear();
 
@@ -803,6 +620,7 @@ string decode(string str, const string &file1)
         {
             out = "Register not found";
             k = 0;
+          //  cout<<c<<endl;
             return out;
         }
         out = SB_form(a, b, c, d, file1);
@@ -841,7 +659,7 @@ string decode(string str, const string &file1)
         out = L_I_form(a, b, c);
     }
     else
-    {
+    {  // cout<<a<<endl;
         // Unrecognized instruction
         out = "Instruction not identified";
         k = 0;
@@ -1086,7 +904,23 @@ while (!in.eof())
             break;
         }
     }
-
+    if(l){
+            string hlep2;
+            int j=0;
+            while(text[j++]!=':');
+            //cout<<text<<" "<<endl;
+            while(text[j]!='\0'&&text[j]!='#')hlep2+=text[j++];
+            hlep2+='\0';
+            text = hlep2;
+           // cout<<text<<" ";
+            j=0;
+            while(text[j++]==' ');
+           // cout<<;
+            if(text[j]!='\0'){
+                l=0;
+              //  cout<<text<<" ";
+            }
+        }
     // If it's not a label line, decode the instruction and generate machine code
     
     if (l == 0)
@@ -1098,14 +932,6 @@ while (!in.eof())
         }
         co++;
         if(str=="OUT OF RANGE"){
-            f << str << endl;
-            break;
-        }
-          if(str=="INVALID OFFSET"){
-            f << str << endl;
-            break;
-        }
-        if(str=="WRONG INPUT"){
             f << str << endl;
             break;
         }
