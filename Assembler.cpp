@@ -4,6 +4,17 @@
 //  Name : Radha
 //  Name : Sarthak Dev Rathor
 #include <bits/stdc++.h>
+// #include <map>
+// #include <algorithm>
+// #include <iostream>
+// #include <set>
+// #include <bitset>
+// #include <string>
+// #include <sstream>
+// #include <iomanip>
+// #include <fstream>
+// #include <climits>
+// #include <cmath>
 using namespace std;
 #define int long long
 // identify the instruction that where they belong
@@ -515,10 +526,7 @@ string U_form(string a, string b, string c)
     string bis;   // binary string with 12 bits (initial bits are zero then bis_h bits are there)
     string bis_h; // binary string converted from hexadecimal number
     int deci;     // deci for checking range of immediate field
-
-    int n1 = stoi(c);
-
-    int n2 = n1;
+    int n1;
     if ((c[0] == '0' && c[1] == 'x') || (c[0] == '-' && c[1] == '0' && c[2] == 'x'))
     {
         // If immediate value is in hexadecimal, convert to binary
@@ -527,7 +535,7 @@ string U_form(string a, string b, string c)
             return "WRONG INPUT"; // if there is a minus sign at start of 0x
         }
         deci = hexToDecimal(c);
-        if (deci >= 0 && deci <= 1048575 && n2 >= 0 && n2 <= 1048575)
+        if (deci >= 0 && deci <= 1048575)
         { // if a valid offset then formation of immediate field of 20 bits
 
             bis_h = hexToBinary(c);
@@ -584,7 +592,7 @@ string U_form(string a, string b, string c)
     {
         // If immediate value is in decimal, convert to binary and ensure it fits within 32 bits
         bitset<32> bi(n1);
-        deci = n1;
+        deci = stoi(c);
         bis = bi.to_string();
         if (c[0] == '-' || (c[0] >= 48 && c[0] <= 57))
         {
@@ -611,7 +619,7 @@ string U_form(string a, string b, string c)
         bis2 += bis[i];
 
     // Check if immediate field is within range
-    if (deci >= 0 && deci <= 1048575 && n2 >= 0 && n2 <= 1048575)
+    if (deci >= 0 && deci <= 1048575)
     {
         // Concatenate fields and convert binary to hexadecimal
         string hlep = bis2 + dp[b] + ap[a];
@@ -650,7 +658,9 @@ string UJ_form(string a, string b, string c, const string &file1)
     string help;
     int y = 0;
     int no = 0;
-    int n11 = stoi(c);
+    int n11 =1;
+    if(checkd(c))
+   n11 = stoi(c);
     if(checkd(c)==1&&n11%4==0)
     {
         n1 = stoi(c);
@@ -775,7 +785,9 @@ string SB_form(string a, string b, string c, string d, const string &file1)
     string help;
     int y = 0;
     int no = 0;
-  int n11 = stoi(d);
+    int n11 =1;
+    if(checkd(d))
+   n11 = stoi(d);
     if(checkd(d)==1&&n11%4==0)
     {
         n1 = stoi(d);
@@ -1547,7 +1559,7 @@ string parsedata(ofstream &fileStream, string line)
                 }
             }
         }
-        else if (identifier == "asciiz")
+        else if (identifier == "asciz")
         {
             fileStream << "\n";//adding new line to identify it as a string 
             while (line[i] == ' ')
@@ -1623,6 +1635,20 @@ string parsedata(ofstream &fileStream, string line)
         return "error";
     }
     return "ok";
+}
+int checkiorl(string a){
+    string hlep;
+    int i=0;
+    while(a[i]!=' '&&a[i]!='\0')hlep+=a[i++];
+    int l=0;
+     for (i = 0; i < 7; i++)
+        {
+            if (s[i].find(hlep) == s[i].end())
+                l++;
+        }
+    if(l==7)return 0;
+    return 1;
+
 }
 int32_t main()
 {
@@ -1870,7 +1896,13 @@ int32_t main()
         else if (l == 7 && sb.find(a) != sb.end())
         {
             // Print error message and return 0
-            f << "error in this line " << endl;
+            f << "error in this code" << endl;
+            return 0;
+        }
+        if (l == 7 && reg.find(a) != reg.end())
+        {
+            // Print error message and return 0
+            f << "error in this code" << endl;
             return 0;
         }
     }
@@ -1902,16 +1934,26 @@ int32_t main()
         // Ignore empty lines
         if (text[i] == '\0')
             continue;
+            string abcd;
         while (i < text.size())
         {
-            if (text[i++] == ':')
+            if (text[i] == ':')
             {
                 l++;
                 break;
             }
+            abcd+=text[i];
+            i++;
+           // cout<<1<<" ";
+        }
+        if (checkiorl(abcd)&&l)
+        {  
+            // Print error message and return 0
+            f << "error in this line " << endl;
+            return 0;
         }
         if (l)
-        {
+        { 
             string hlep2;
             int j = 0;
             while (text[j++] != ':')
@@ -1950,6 +1992,12 @@ int32_t main()
         if (l == 0)
         {
             string str = decode(text, file1);
+            if (str == "ERROR")
+            {
+                f << str << endl;
+                break;
+            }
+            co++;
             if (str == "ERROR")
             {
                 f << str << endl;

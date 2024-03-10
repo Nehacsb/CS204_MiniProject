@@ -25,7 +25,7 @@ Our machine code similarly shows the above representation of venus simulator as:
 ASSEMBLY LANGUAGE CODE:				         
 .data
 var: .word 0b11 0x12 'C'
-var3: .asciiz "CDE"
+var3: .asciz "CDE"
 var4: .dword 0x343 89
 var 5: .half 3
 .text
@@ -73,7 +73,7 @@ The instructions where the user can get error are:
 	L_I-FORM:In this,all errors in 1st point can occur.
 4)S-FORM:All errors of 1st point can occur.
 5)SB and UJ-FORM: In these one error can occur which is LABEL NOT FOUND.
-
+6)The name of labels cannot be same as instructions .
 NOTE:Try to use text segment with either one space or comma within registers.We have tried out best to cover all possible cases in which the user can use register after register with any amount of space,comma etc but it is the most convenient way if the user can write instruction registers with one space or comma between them.
 
 We have done coding for the comments also as if the user uses comments starting with # then the whole line after this hashtag(alongwith this hashtag) will not be read by the code and hence they are only used for conveying the functionality of various functions etc.
