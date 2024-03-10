@@ -22,23 +22,34 @@ PRESENTATION OF DATA SEGMENT:
 Once the code is executed, the file machine_code.mc will show the data segment with memory address alongwith the data that has stored.
 In the venus simulator,.word takes 32 bits , .half takes 16 bits , .byte takes 8 bit, .dword takes 64 bits, .asciz takes (size of string)*8 bits to store their corresponding data.
 Our machine code similarly shows the above representation of venus simulator as:
-ASSEMBLY LANGUAGE CODE:			    |	    MACHINE CODE GENERATED:
-					                      |  0x10000000 0x00000003
-.data					                  |  0x10000004 0x00000012
-var: .word 0b11 0x12 'C'		    |  0x10000008 0x43
-var3: .asciiz "CDE"			        |
-var4: .dword 0x343 89			      |  0x1000000C 0x43
-var 5: .half 3				          |  0x1000000D 0x44
-.text					                  |  0x1000000E 0x45
-add x3 x4 x2				            |  0x1000000F 0x00
-add x8 x8 x9				            |
-					                      |  0x10000010 0x0000000000000343
-					                      |  0x10000018 0x0000000000000059
-					                      |  0x10000020 0x0003
-					                      |  text segment
-					                      |  0x0  0x002201B3
-					                      |  0x4  0x00940433
-					                      |  0x8  End of code
+ASSEMBLY LANGUAGE CODE:				         
+.data
+var: .word 0b11 0x12 'C'
+var3: .asciiz "CDE"
+var4: .dword 0x343 89
+var 5: .half 3
+.text
+add x3 x4 x2
+add x8 x8 x9
+
+GENERATED MACHINE CODE:
+0x10000000 0x00000003
+0x10000004 0x00000012
+0x10000008 0x43
+
+0x1000000C 0x43
+0x1000000D 0x44
+0x1000000E 0x45
+0x1000000F 0x00
+
+0x10000010 0x0000000000000343
+0x10000018 0x0000000000000059
+0x10000020 0x0003
+text segment
+0x0  0x002201B3
+0x4  0x00940433
+0x8  End of code
+
 
 The machine code is in hexadecimal format(both memory addresses and the data stored).
 Also in venus simulator if we use decimal format in .dword then the data stored in memory has some  different format.We have done this part differently as compared to venus and stored the converted form of decimal to hexadecimal.
