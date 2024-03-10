@@ -15,10 +15,12 @@ map<string, string> ap, bp, cp, dp;
 int k;
 // for line count
 int co = 0;
-// Function to convert a hexadecimal string to binary string
+
 string mem = "00010000000000000000000000000000";
 bitset<32> memstring(mem);
 int memory = memstring.to_ulong(); // initial memory
+set<string> variables ;//to check the declared labels in datasegment 
+// Function to convert a hexadecimal string to binary string
 string hexToBinary(const string &hexStr)
 {
     // Convert hexadecimal string to decimal
@@ -628,6 +630,16 @@ string U_form(string a, string b, string c)
     else
         return "OUT OF RANGE";
 }
+int checkd(string a)
+{
+    int n = a.size();
+    for (int i = 0; i < n; i++)
+    {
+        if ((a[i] > '9' || a[i] < '0') && a[i] != '-')
+            return 0;
+    }
+    return 1;
+}
 // UJ-format machine code generation function
 string UJ_form(string a, string b, string c, const string &file1)
 {
@@ -638,7 +650,12 @@ string UJ_form(string a, string b, string c, const string &file1)
     string help;
     int y = 0;
     int no = 0;
-
+    int n11 = stoi(c);
+    if(checkd(c)==1&&n11%4==0)
+    {
+        n1 = stoi(c);
+    }  
+ else{
     // Read lines from the file
     while (!file.eof())
     {
@@ -675,11 +692,43 @@ string UJ_form(string a, string b, string c, const string &file1)
             no++;
             break;
         }
-
+        i = 0;
+        int abc = 0;
+        while (i < text.size())
+        {
+            if (text[i] == '.')
+            {
+                abc++;
+                break;
+            }
+            i++;
+        }
+        if (abc)
+            continue;
         // If the label is not found, continue searching
         if (l == 7)
+        {
+            string hlep2;
+            int j = 0;
+            while (text[j++] != ':')
+                ;
+            // cout<<text<<" "<<endl;
+            while (text[j] != '\0' && text[j] != '#')
+                hlep2 += text[j++];
+            hlep2 += '\0';
+            text = hlep2;
+            // cout<<text<<" ";
+            j = 0;
+            while (text[j++] == ' ')
+                ;
+            // cout<<;
+            if (text[j] != '\0')
+            {
+                y++;
+                //  cout<<text<<" ";
+            }
             continue;
-
+        }
         y++;
     }
 
@@ -693,7 +742,7 @@ string UJ_form(string a, string b, string c, const string &file1)
     // Calculate the offset based on the line number
     file.close();
     n1 = (y - co) * 4;
-
+    }
     // Extract relevant bits from the offset and concatenate fields
     bitset<32> bi(n1);
     string bis = bi.to_string();
@@ -726,7 +775,12 @@ string SB_form(string a, string b, string c, string d, const string &file1)
     string help;
     int y = 0;
     int no = 0;
-
+  int n11 = stoi(d);
+    if(checkd(d)==1&&n11%4==0)
+    {
+        n1 = stoi(d);
+    }  
+ else{
     // Read lines from the file
     while (!file.eof())
     {
@@ -763,14 +817,47 @@ string SB_form(string a, string b, string c, string d, const string &file1)
             no++;
             break;
         }
-
+        i = 0;
+        int abc = 0;
+        while (i < text.size())
+        {
+            if (text[i] == '.')
+            {
+                abc++;
+                break;
+            }
+            i++;
+        }
+        if (abc)
+            continue;
         // If the label is not found, continue searching
         if (l == 7)
+        {
+            string hlep2;
+            int j = 0;
+            while (text[j++] != ':')
+                ;
+            // cout<<text<<" "<<endl;
+            while (text[j] != '\0' && text[j] != '#')
+                hlep2 += text[j++];
+            hlep2 += '\0';
+            text = hlep2;
+            // cout<<text<<" ";
+            j = 0;
+            while (text[j++] == ' ')
+                ;
+            // cout<<;
+            if (text[j] != '\0')
+            {
+                y++;
+                //  cout<<text<<" ";
+            }
             continue;
+        }
 
         y++;
     }
-
+  //  cout << y << " ";
     // If the label is not found, return an error message
     file.close();
     if (no == 0)
@@ -781,7 +868,7 @@ string SB_form(string a, string b, string c, string d, const string &file1)
 
     // Calculate the offset based on the line number
     n1 = (y - co) * 4;
-
+ }
     // Extract relevant bits from the offset and concatenate fields
     bitset<13> bi(n1);
     string bis = bi.to_string();
@@ -955,7 +1042,589 @@ string decode(string str, const string &file1)
         k = 0;
 
     return out;
-}int32_t main()
+}
+string parsedata(ofstream &fileStream, string line)
+{
+    string identifier;//identifier is the label name 
+    int i = 0;
+    identifier.clear();
+    while (line[i] == ' ')
+        i++;
+    while (line[i] != '#' && i < line.size() && line[i] != ':')
+        identifier += line[i++];
+    // fileStream<<identifier<<endl;
+    if(variables.find(identifier)==variables.end()){
+        variables.insert(identifier);
+    }
+    else{
+        fileStream<<"Variable declared again"<<endl;
+        return "error";
+    }
+    i++; // skipping semicolon
+    identifier.clear();
+    while (line[i] == ' ')
+        i++;//skipping spaces
+    if (line[i] == '.')
+    {
+        i++;//skip the dot in front of data type and take in the type
+        while (line[i] != ' ' && i < line.size())
+            identifier += line[i++];
+        if (identifier == "word")
+        {
+            // memory will be added by 4
+            while (line[i] == ' ')
+            {
+                i++;//skipping the spaces
+            }
+            while (line[i] != '\0')//taking all values in the line
+            {
+                while (line[i] == ' ')
+                {
+                    i++;//skipping spaces in between the data
+                }
+                if (line[i] == '0' && line[i + 1] == 'b')//if the variable is binary number
+                {
+                    // binary
+                    i += 2; // skipped 0b
+                    string binword;
+                    binword.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        binword += line[i++];
+                    }
+                    //printing the current memory corressponding to current value 
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 4;//adding 4 to memory
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+                    //converting the value to hexadecimal and printing it
+                    bitset<32> binwordtobin(binword); // as we are in word we set value to  32 bits 
+                    int bins = binwordtobin.to_ulong();
+                    stringstream hexbin;
+                    hexbin << hex << setw(8) << setfill('0') << uppercase << bins;
+                    string binhelp = hexbin.str();
+                    binhelp = "0x" + binhelp;
+                    fileStream << binhelp << "\n";
+                }
+                else if (line[i] == '0' && line[i + 1] == 'x')
+                {
+                    // if variable is hexadecimal
+                    i += 2;
+                    string hexword;
+                    hexword.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        hexword += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 4;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+                    //as it is word we set value to  32bits 
+                    fileStream << "0x" << setw(8) << setfill('0') << hexword << "\n";
+                }
+                                else if(line[i] == '\'' && ((line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')||( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' ))){
+                    if(line[i] == '\'' && (line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')){
+        
+                        i = i + 1;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+                        
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                        
+                       
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory += 4;
+                        
+                        fileStream << tmp << "\n";//printing the character
+                        i = i + 2;
+                    }
+                    else if(line[i] == '\'' && ( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' )){
+                        i = i + 2;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory += 4;
+                        fileStream << tmp << "\n";//printing the character
+                        i = i + 2;
+                    }
+                }
+                else if(line[i]=='"'){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else
+                {
+                    // if value is decimal
+                    string decword;
+                    decword.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        decword += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 4;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    int decs = stoi(decword);
+                    stringstream hexdec;
+                    hexdec << hex << setw(8) << setfill('0') << uppercase << decs;
+                    string dechelp = hexdec.str();
+                    dechelp = "0x" + dechelp;
+                    fileStream << dechelp << "\n";
+                }
+            }
+        }
+        else if (identifier == "half")
+        {
+            //memory is added by 2
+            while (line[i] == ' ')
+            {
+                i++;
+            }
+            while (line[i] != '\0')
+            {
+                while (line[i] == ' ')
+                {
+                    i++;
+                }
+                if (line[i] == '0' && line[i + 1] == 'b')
+                {
+                    // binary
+                    i += 2; // skipped 0b
+                    string binhalf;
+                    binhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        binhalf += line[i++];
+                    }
+
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 2;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    bitset<16> binwordtobin(binhalf);//as we in half word we set the value to 16 bit
+                    int bins = binwordtobin.to_ulong();
+                    stringstream hexbin;
+                    hexbin << hex << setw(4) << setfill('0') << uppercase << bins;
+                    string binhelp = hexbin.str();
+                    binhelp = "0x" + binhelp;
+                    fileStream << binhelp << "\n";
+                }
+                else if (line[i] == '0' && line[i + 1] == 'x')
+                {
+                    // hexadecimal 
+                    i += 2;
+                    string hexhalf;
+                    hexhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        hexhalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 2;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+                    // as we are in half if set value to 16 bit 
+                    fileStream << "0x" << setw(4) << setfill('0') << hexhalf << "\n";
+                }
+                else if(line[i] == '\'' && ((line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')||( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' ))){
+                    if(line[i] == '\'' && (line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')){
+                        
+                        i = i + 1;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+                        
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                       
+                       
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory += 2;
+                        
+                        fileStream << tmp << "\n";//printing the character
+                        
+                        i = i + 2;
+                    }
+                    else if(line[i] == '\'' && ( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' )){
+                        i = i + 2;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory += 2;
+                        fileStream << tmp << "\n";//printing the character
+                        i = i + 2;
+                    }
+                }
+                else if(line[i]=='"'){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else
+                {
+                    // decimal
+                    string dechalf;
+                    dechalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        dechalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 2;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    int decs = stoi(dechalf);
+                    stringstream hexdec;
+                    hexdec << hex << setw(4) << setfill('0') << uppercase << decs;//as we are in half we will set value to 16 byte
+                    string dechelp = hexdec.str();
+                    dechelp = "0x" + dechelp;
+                    fileStream << dechelp << "\n";
+                }
+            }
+        }
+        else if (identifier == "byte")
+        {
+            // memory will be added by 1
+            while (line[i] == ' ')
+            {
+                i++;
+            }
+            while (line[i] != '\0')
+            {
+                while (line[i] == ' ')
+                {
+                    i++;
+                }
+                if (line[i] == '0' && line[i + 1] == 'b')
+                {
+                    // binary
+                    i += 2; // skipped 0b
+                    string binhalf;
+                    binhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        binhalf += line[i++];
+                    }
+
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 1;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    bitset<8> binwordtobin(binhalf);
+                    int bins = binwordtobin.to_ulong();
+                    stringstream hexbin;
+                    hexbin << hex << setw(2) << setfill('0') << uppercase << bins;//as we in byte we will set to 8 bits
+                    string binhelp = hexbin.str();
+                    binhelp = "0x" + binhelp;
+                    fileStream << binhelp << "\n";
+                }
+                else if (line[i] == '0' && line[i + 1] == 'x')
+                {
+                    // hexa
+                    i += 2;//skipping "0x"
+                    string hexhalf;
+                    hexhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        hexhalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 1;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    fileStream << "0x" << setw(2) << setfill('0') << hexhalf << "\n";// as we are in byte we have 8bits
+                }
+                else if(line[i] == '\'' && ((line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')||( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' ))){
+                    if(line[i] == '\'' && (line[i + 1]>=33 && line[i+1]<=126 && line[i+1]!=39 && line[i+2]=='\'' && line[i+3]!='\'')){
+                        
+                        i = i + 1;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+                        
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                        
+                        
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory++;
+                        
+                        fileStream << tmp << "\n";//printing the character
+                       
+                        i = i + 2;
+                    }
+                    else if(line[i] == '\'' && ( line[i + 1]==92 && line[i+2]==39 && line[i+3]=='\'' )){
+                        i = i + 2;
+                        int ascii = static_cast<int>(line[i]);//ascii value of current character
+                        stringstream tmphelp;
+                        tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                        string tmp = tmphelp.str();
+                        tmp = "0x" + tmp;
+
+                        stringstream hexmem;
+                        hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                        string memhelp = hexmem.str();
+                        memhelp = "0x" + memhelp;
+                        fileStream << memhelp << " "; // printing corresponding memory of the character
+                        memory++;
+
+                        fileStream << tmp << "\n";//printing the character
+                        i = i + 2;
+                    }
+                }
+                else if(line[i]=='"'){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else
+                {
+                    // decimal
+                    string dechalf;
+                    dechalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        dechalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 1;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    int decs = stoi(dechalf);
+                    stringstream hexdec;
+                    hexdec << hex << setw(2) << setfill('0') << uppercase << decs;//as we are in byte we have 8 bits
+                    string dechelp = hexdec.str();
+                    dechelp = "0x" + dechelp;
+                    fileStream << dechelp << "\n";
+                }
+            }
+        }
+        else if (identifier == "dword")
+        {
+            //memory will be added by 8
+            while (line[i] == ' ')
+            {
+                i++;
+            }
+            while (line[i] != '\0')
+            {
+                while (line[i] == ' ')
+                {
+                    i++;
+                }
+                if (line[i] == '0' && line[i + 1] == 'b')
+                {
+                    // binary
+                    i += 2; // skipped 0b
+                    string binhalf;
+                    binhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        binhalf += line[i++];
+                    }
+
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 8;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    bitset<64> binwordtobin(binhalf);
+                    int bins = binwordtobin.to_ulong();
+                    stringstream hexbin;
+                    hexbin << hex << setw(16) << setfill('0') << uppercase << bins;//we have 64 bits 
+                    string binhelp = hexbin.str();
+                    binhelp = "0x" + binhelp;
+                    fileStream << binhelp << "\n";
+                }
+                else if (line[i] == '0' && line[i + 1] == 'x')
+                {
+                    // hexa
+                    i += 2;
+                    string hexhalf;
+                    hexhalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        hexhalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 8;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    fileStream << "0x" << setw(16) << setfill('0') << hexhalf << "\n";
+                }
+                else if(line[i] == '\'' ){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else if(line[i]=='"'){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else
+                {
+                    // decimal
+                    string dechalf;
+                    dechalf.clear();
+                    while (line[i] != ' ' && line[i] != '#' && line[i] != '\0')
+                    {
+                        dechalf += line[i++];
+                    }
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    memory += 8;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " ";
+
+                    int decs = stoi(dechalf);
+                    stringstream hexdec;
+                    hexdec << hex << setw(16) << setfill('0') << uppercase << decs;//we have 64 bits 
+                    string dechelp = hexdec.str();
+                    dechelp = "0x" + dechelp;
+                    fileStream << dechelp << "\n";
+                }
+            }
+        }
+        else if (identifier == "asciiz")
+        {
+            fileStream << "\n";//adding new line to identify it as a string 
+            while (line[i] == ' ')
+            {
+                i++;
+            }
+                if (line[i] == '0' && (line[i + 1] == 'x'|| line[i+1]=='b')){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else if(line[i] == '\''){
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+                else if(line[i]>=0 && line[i]<=9)
+                {
+                    
+                    fileStream << "Wrong datatype format " << endl;
+                    return "WRONG FORMAT";
+                }
+            if(line[i]!='"'){
+                fileStream<<"Wrong datatype format"<<endl;
+                return "WRONG FORMAT";
+            }
+
+            i++; // to skip opening " inverted comma
+            while (line[i] != '\0')
+            {
+                string sentence;
+                sentence.clear();
+                
+                while (line[i] != '"')//till end of string 
+                {
+
+                    // sentence+=line[i++];
+                    int ascii = static_cast<int>(line[i++]);//ascii value of current character
+                    stringstream tmphelp;
+                    tmphelp << hex << setw(2) << setfill('0') << uppercase << ascii;//each character is a byte 
+                    string tmp = tmphelp.str();
+                    tmp = "0x" + tmp;
+
+                    stringstream hexmem;
+                    hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                    string memhelp = hexmem.str();
+                    memhelp = "0x" + memhelp;
+                    fileStream << memhelp << " "; // printing corresponding memory of the character
+                    memory++;
+
+                    fileStream << tmp << "\n";//printing the character
+                }
+                i++; // to skip closing inverted comma
+                     // to take the null character after the asciiz directive
+                stringstream hexmem;
+                hexmem << hex << setw(8) << setfill('0') << uppercase << memory;
+                string memhelp = hexmem.str();
+                memhelp = "0x" + memhelp;
+                memory++;
+                fileStream << memhelp << " ";
+                fileStream << "0x00"<< "\n"; // null character at end of string 
+                fileStream << "\n";//new line to seperate the string 
+                
+            }
+        }
+        else
+        {
+            fileStream << "Wrong datatype name " << endl;//no name found 
+            return "error";
+        }
+    }
+    else
+    {
+        fileStream << "Wrong dataType format" << endl;//no '.' in front of name
+        return "error";
+    }
+    return "ok";
+}
+int32_t main()
 {
     // Initialize registers
     reg = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31"};
@@ -1127,6 +1796,60 @@ string decode(string str, const string &file1)
         if (text[i] == '\0')
             continue;
 
+
+        string check;
+        // bool first is to check if first line contains data or not if not it skips to text segment part  
+        if (text[i] == '.' && first == true)
+        {
+            i++; // skipping '.'
+            while (text[i] != '\0' && text[i] != '#' && text[i] != ' ')
+            {
+                check += text[i++];
+            }
+            if (check == "data")
+            {
+                data_seg = true;//data segment found
+            }
+            first = false;//first line done
+            continue;
+        }
+        if (data_seg)
+        {
+            if (text[i] == '.')
+            {
+                i++; //skip the dot which is in front of label 
+                while (text[i] != '\0' && text[i] != '#' && text[i] != ' ')
+                {
+                    check += text[i++];
+                }
+                if (check == "text")
+                {
+                    data_seg = false;//if the string after '.' is text, then we continue and take in next line
+                    continue;
+                }
+            }
+            else
+            {
+                //as we are now in data segment we need to parse the current line
+                string err = parsedata(f, text);
+                if (err == "error")
+                {
+                    f << "error in parsing data segment"<< "\n";
+                    return 0;
+                }
+                if(err=="WRONG FORMAT"){
+                    f << "wrong data format in data segment"<< "\n";
+                    return 0;
+                }
+            }
+        }
+        if (data_seg == true)//while we are in data segment we take continue
+            continue;
+        if (printtext == false)//to print first as soon as data segment ends
+        {
+            f << "text segment"<< "\n";
+            printtext = true;
+        }
         // Extract the opcode or label from the line
         string a;
         while (text[i] != ' ' && text[i] != ',' && text[i] != ':')
@@ -1266,7 +1989,12 @@ string decode(string str, const string &file1)
                 return 0;
         }
     }
-
+    stringstream hexS;
+    hexS << hex << pc;
+    p_c = hexS.str();
+    p_c = "0x" + p_c;
+    f << p_c << "  ";
+    f << "End of code" << endl;
     // Close the input and output files
     in.close();
     f.close();
